@@ -1,0 +1,121 @@
+---
+- hosts: loadbalancer
+  become: true
+  tasks:
+    - name: install nginx centos version...
+      dnf: 
+         name: "{{ item }}" 
+         state: present
+         update_cache: yes
+      loop: 
+          - nginx
+
+    - name: chequear que haya iniciado nginx
+      systemd:
+         name: "{{ item }}"
+         state: started
+         enabled: yes
+      loop:
+          - nginx 
+#https://upcloud.com/community/tutorials/configure-load-balancing-nginx/
+
+
+    - name: configure nginx site
+      template: 
+        src: templates/nginx.conf.j2 
+#        dest: /etc/nginx/sites-available/demo
+        dest: /etc/nginx/conf.d/demo.conf
+        mode: '0644'
+      notify: restart nginx
+#=========================================================================
+#----- PARA DESACTIVAR EL DEFAULT SITE HAY QUE MODIFICAR 
+#-----
+#----- el archivo /etc/nginx/conf.d/demo.conf
+#-----
+#----- comentando las opciones de server que utiliza
+#-----
+#-> comentar        listen       80 default_server;
+#-> comentar        listen       [::]:80 default_server;
+#-> comentar        server_name  _;
+#-> comentar        root         /usr/share/nginx/html;
+#========================================================================
+#    - name: de-activate default nginx site
+#      file: 
+#        path: /etc/nginx/sites-enabled/default 
+#        path: /etc/nginx/nginx.conf
+#si borro este archivo no levanta nginx
+        #        state: absent
+#      notify: restart nginx
+
+#    - name: activate demo nginx site
+#      file: 
+#        src: /etc/nginx/sites-available/demo 
+#        dest: /etc/nginx/sites-enabled/demo 
+#        state: link
+#      notify: restart nginx
+#
+
+    - name: Desactivando el sitio por defecto / linea listen 80 default_server
+      lineinfile:
+        path: /etc/nginx/conf.d/demo.conf
+        regexp: '^        listen       80 default_server;'
+        line:   '#        listen       80 default_server;'
+      notify: restart nginx
+
+    - name: Desactivando el sitio por defecto / linea listen  [::]:80 default_server
+      lineinfile:
+        path: /etc/nginx/conf.d/demo.conf
+        regexp: '^        listen       [::]:80 default_server;'
+        line:   '#        listen       [::]:80 default_server;'
+      notify: restart nginx
+
+    - name: Desactivando el sitio por defecto / linea   server_name  _;
+      lineinfile:
+        path: /etc/nginx/conf.d/demo.conf
+        regexp: '^        server_name  _;'
+        line:   '#        server_name  _;'
+      notify: restart nginx
+
+    - name: Desactivando el sitio por defecto / linea root  /usr/share/nginx/html;
+      lineinfile:
+        path: /etc/nginx/conf.d/demo.conf
+        regexp: '^        root         /usr/share/nginx/html;'
+        line:   '#        root         /usr/share/nginx/html;'
+      notify: restart nginx
+      
+# para centos 8 selinux: hay que configurar los permisos.
+#[root@lb01 nginx]#  setsebool httpd_can_network_connect 1 -P
+#[root@lb01 nginx]# setsebool -P httpd_graceful_shutdown 1
+#[root@lb01 nginx]# setsebool -P httpd_can_network_relay 1
+#[root@lb01 nginx]# setsebool -P nis_enabled 1
+
+
+    - name: Set httpd_can_network_connect flag on and keep it persistent across reboots
+      seboolean:
+        name: httpd_can_network_connect
+        state: yes
+        persistent: yes
+
+    - name: Set httpd_can_network_connect flag on and keep it persistent across reboots
+      seboolean:
+        name: httpd_graceful_shutdown
+        state: yes
+        persistent: yes
+
+    - name: Set httpd_can_network_connect flag on and keep it persistent across reboots
+      seboolean:
+        name: httpd_can_network_relay
+        state: yes
+        persistent: yes
+
+    - name: Set httpd_can_network_connect flag on and keep it persistent across reboots
+      seboolean:
+        name: nis_enabled
+        state: yes
+        persistent: yes
+ 
+  handlers:
+  - name: restart nginx
+    systemd: 
+      name: nginx 
+      state: restarted

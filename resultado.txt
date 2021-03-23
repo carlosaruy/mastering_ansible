@@ -1,0 +1,83 @@
+
+PLAY [webserver] *****************************************************************************************************************************************************
+
+TASK [Gathering Facts] ***********************************************************************************************************************************************
+ok: [app02]
+ok: [app01]
+
+TASK [install web components] ****************************************************************************************************************************************
+ok: [app02] => (item=httpd)
+ok: [app01] => (item=httpd)
+ok: [app02] => (item=python3-pip)
+ok: [app01] => (item=python3-pip)
+ok: [app02] => (item=python3-virtualenv)
+ok: [app01] => (item=python3-virtualenv)
+ok: [app02] => (item=python3-mod_wsgi)
+ok: [app02] => (item=python3-PyMySQL)
+ok: [app01] => (item=python3-mod_wsgi)
+ok: [app01] => (item=python3-PyMySQL)
+
+TASK [crear directorio sites-available apache 8 para centos.] ********************************************************************************************************
+ok: [app02]
+ok: [app01]
+
+TASK [crear directorio sites-enabled apache 8 para centos.] **********************************************************************************************************
+ok: [app02]
+ok: [app01]
+
+TASK [crear directorio /var/www/demo donde se alojara el servidor virtual] *******************************************************************************************
+ok: [app02]
+ok: [app01]
+
+TASK [crear directorio /var/www/demo/html donde estará el website] ***************************************************************************************************
+ok: [app02]
+ok: [app01]
+
+TASK [crear directorio /var/www/demo/log donde estarán los logs] *****************************************************************************************************
+ok: [app02]
+ok: [app01]
+
+TASK [Editar /etc/httpd/conf.d para habilitar que apache encuentre virtual hosts en el directorio sites-enabled] *****************************************************
+ok: [app02]
+ok: [app01]
+
+TASK [iniciar apache2] ***********************************************************************************************************************************************
+ok: [app02] => (item=httpd)
+ok: [app01] => (item=httpd)
+
+TASK [asegurarse que el mod_wsgi está activo.] ***********************************************************************************************************************
+ok: [app02]
+ok: [app01]
+
+TASK [copiar el fuente de la app de demostración, en /var/www/demo/html] *********************************************************************************************
+changed: [app02]
+changed: [app01]
+
+TASK [registrar la ip en hosts del servidor de la base de datos] *****************************************************************************************************
+ok: [app02]
+ok: [app01]
+
+TASK [copiar la configuración de virtual host] ***********************************************************************************************************************
+ok: [app02]
+ok: [app01]
+
+TASK [setup python virtualenv] ***************************************************************************************************************************************
+ok: [app02]
+ok: [app01]
+
+TASK [de-activate default apache site] *******************************************************************************************************************************
+ok: [app02]
+ok: [app01]
+
+TASK [activate demo apache site] *************************************************************************************************************************************
+ok: [app02]
+ok: [app01]
+
+RUNNING HANDLER [Restart apache] *************************************************************************************************************************************
+changed: [app02]
+changed: [app01]
+
+PLAY RECAP ***********************************************************************************************************************************************************
+app01                      : ok=17   changed=2    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+app02                      : ok=17   changed=2    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+

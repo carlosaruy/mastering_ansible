@@ -1,0 +1,14 @@
+---
+- hosts: webserver
+  become: true
+  tasks:
+    - name: install web components
+      yum: 
+         name: httpd 
+         state: present 
+         update_cache: yes
+    - name: iniciar apache2
+      systemd:
+         name: httpd 
+         state: started
+         enabled: yes

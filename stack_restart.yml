@@ -1,0 +1,56 @@
+---
+- hosts: loadbalancer
+  become: true
+  tasks:
+    - name: parando loadbalancer
+      systemd:
+         name: "{{ item }}"
+         state: stopped
+         enabled: yes
+      loop:
+          - nginx
+
+- hosts: webserver
+  become: true
+  tasks:
+    - name: parando webserver
+      systemd:
+         name: "{{ item }}"
+         state: stopped
+         enabled: yes
+      loop:
+          - httpd
+
+- hosts: database
+  become: true
+  tasks:
+    - name: reiniciando mysql
+      systemd:
+         name: "{{ item }}"
+         state: restarted
+         enabled: yes
+      loop:
+          - mysqld
+
+- hosts: webserver
+  become: true
+  tasks:
+    - name: iniciando webserver
+      systemd:
+         name: "{{ item }}"
+         state: started
+         enabled: yes
+      loop:
+          - httpd
+
+- hosts: loadbalancer
+  become: true
+  tasks:
+    - name: iniciando loadbalancer
+      systemd:
+         name: "{{ item }}"
+         state: started
+         enabled: yes
+      loop:
+          - nginx
+
