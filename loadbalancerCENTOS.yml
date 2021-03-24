@@ -9,6 +9,17 @@
          update_cache: yes
       loop: 
           - nginx
+#si fuera necesario instalar el httplib2, así se instala
+#pero la dependencia de httplib2 se eliminó en ansible 2.1.
+
+    - name: instalar httplib desde powertools
+      dnf: 
+         name: python3-httplib2
+         update_cache: yes
+# ojo, powertools todo minúscula...         
+         enablerepo: powertools
+         state: present
+
 
     - name: chequear que haya iniciado nginx
       systemd:

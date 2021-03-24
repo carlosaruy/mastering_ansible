@@ -25,3 +25,43 @@
 
     - name: verify mysql is listening on 3306
       wait_for: port=3306 timeout=1
+
+- hosts: control
+  tasks:
+    - name: verificar la respuesta end-to-end en index
+      uri:
+        url: "http://{{item}}"
+        return_content: yes 
+      register: this
+      failed_when: "'Hello, from sunny' not in this.content"    
+      with_items: 
+        - "{{ groups['loadbalancer'] }}"
+
+    - name: verificar la respuesta end-to-end en db
+      uri:
+        url: "http://{{item}}/db"
+        return_content: yes 
+      register: this
+      failed_when: "'Database Connected from' not in this.content"    
+      with_items: 
+        - "{{ groups['loadbalancer'] }}"
+
+- hosts: loadbalancer
+  tasks:
+    - name: verificar la respuesta end-to-end en index
+      uri:
+        url: "http://{{item}}"
+        return_content: yes 
+      register: this
+      failed_when: "'Hello, from sunny' not in this.content"    
+      with_items: 
+        - "{{ groups['webserver'] }}"
+
+    - name: verificar la respuesta end-to-end en db
+      uri:
+        url: "http://{{item}}/db"
+        return_content: yes 
+      register: this
+      failed_when: "'Database Connected from' not in this.content"    
+      with_items: 
+        - "{{ groups['webserver'] }}"
