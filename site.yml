@@ -1,0 +1,5 @@
+---
+- include: control.yml
+- include: databaseCENTOS.yml
+- include: webserverCENTOS.yml
+- include: loadbalancerCENTOS.yml
