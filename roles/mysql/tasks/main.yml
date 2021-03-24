@@ -17,7 +17,7 @@
   lineinfile: 
       dest: /etc/my.cnf.d/mysql-server.cnf 
       regexp: '^bind-address' 
-      line: 'bind-address = 0.0.0.0'
+      line: 'bind-address = {{ansible_eth0.ipv4.address}}'
   notify: 
       - restart mysql
 

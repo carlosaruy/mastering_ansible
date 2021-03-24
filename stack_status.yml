@@ -24,7 +24,10 @@
       command: service mysqld status
 
     - name: verify mysql is listening on 3306
-      wait_for: port=3306 timeout=1
+      wait_for: 
+        port: 3306 
+        timeout: 1
+        host: '{{ansible_eth0.ipv4.address}}'
 
 - hosts: control
   tasks:
