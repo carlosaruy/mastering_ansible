@@ -1,0 +1,19 @@
+---
+- hosts: control
+  become: true
+  tasks:
+    - name: install tools
+      dnf: 
+         name: "{{ item }}" 
+         state: present
+         update_cache: yes
+#no es necesario instalar curl, lo agrego para realizar el proceso de pasarlo al rol.
+      loop: 
+          - curl
+#no es necesario instalar httplib2, lo agrego para realizar el proceso de pasarlo al rol.         
+    - name: instalar httplib desde powertools
+      dnf: 
+         name: python3-httplib2
+         update_cache: yes
+         enablerepo: powertools
+         state: present          
