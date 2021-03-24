@@ -1,2 +1,6 @@
 ---
 # handlers file for demo_app
+- name: Restart apache
+  systemd:
+    name: httpd
+    state: restarted         

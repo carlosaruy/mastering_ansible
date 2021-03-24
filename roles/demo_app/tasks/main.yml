@@ -1,2 +1,76 @@
 ---
 # tasks file for demo_app
+- name: install web components
+  dnf: 
+      name: "{{item}}" 
+      update_cache: yes
+  loop:
+    - python3-pip
+    - python3-virtualenv
+    - python3-mod_wsgi
+#python3-mod_wsgi.x86_64 : A WSGI interface for Python web applications in Apache
+    - python3-PyMySQL
+    - mysql-devel.x86_64
+    - gcc
+    - python36-devel
+
+#https://devconnected.com/how-to-install-apache-on-centos-8/
+- name: crear directorio /var/www/demo donde se alojara el servidor virtual
+  file:
+      path: /var/www/demo
+      state: directory
+
+- name: crear directorio /var/www/demo/html donde estará el website
+  file:
+      path: /var/www/demo/html
+      state: directory
+
+- name: crear directorio /var/www/demo/log donde estarán los logs
+  file:
+      path: /var/www/demo/log
+      state: directory
+
+- name: asegurarse que el mod_wsgi está activo.
+  apache2_module: 
+      state: present
+      name: wsgi
+  notify:
+      - Restart apache
+- name: copiar el fuente de la app de demostración, en /var/www/demo/html
+  copy: 
+      src: demo/app/
+      dest: /var/www/demo/html
+      mode: '0755'
+  notify:
+      - Restart apache
+- name:  registrar la ip en hosts del servidor de la base de datos
+  lineinfile: 
+      dest: /etc/hosts 
+      line: '10.108.0.5    db01'
+
+- name: copiar la configuración de virtual host
+  copy: 
+      src: demo/demo.conf
+      dest: /etc/httpd/sites-available
+      mode: '0755'
+  notify:
+      - Restart apache
+
+- name: setup python virtualenv
+  pip: 
+      requirements: /var/www/demo/html/requirements.txt 
+      virtualenv: /var/www/demo/.venv
+  notify: Restart apache
+
+- name: activate demo apache site
+  file: 
+      src: /etc/httpd/sites-available/demo.conf 
+      dest: /etc/httpd/sites-enabled/demo.conf 
+      state: link
+  notify: Restart apache
+
+- name: Set httpd_can_network_connect_db flag on and keep it persistent across reboots
+  seboolean:
+    name: httpd_can_network_connect_db
+    state: yes
+    persistent: yes

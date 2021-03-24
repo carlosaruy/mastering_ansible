@@ -1,2 +1,46 @@
 ---
 # tasks file for apache2
+    - name: install web components
+      dnf: 
+         name: "{{item}}" 
+         update_cache: yes
+      loop:
+        - httpd
+
+###comandos por apache en centos8
+    - name: crear directorio sites-available apache 8 para centos.
+      file:
+         path: /etc/httpd/sites-available
+         state: directory
+
+    - name: crear directorio sites-enabled apache 8 para centos.
+      file:
+         path: /etc/httpd/sites-enabled
+         state: directory
+
+#https://www.digitalocean.com/community/tutorials/how-to-install-the-apache-web-server-on-centos-8
+#este tutorial indica que se agregue al final la línea, mientras que el de devconnected
+#indica que se reemplace. por ahora lo agrego solamente.
+
+    - name: Editar /etc/httpd/conf.d para habilitar que apache encuentre virtual hosts en el directorio sites-enabled
+      lineinfile:
+         path: /etc/httpd/conf/httpd.conf
+         regexp: '^IncludeOptional conf\.d\/\*\.conf'
+         insertafter: '#PermitRootLogin'
+         line: 'IncludeOptional sites-enabled/*.conf'
+
+    - name: iniciar apache2
+      systemd:
+         name: "{{ item }}"
+         state: started
+         enabled: yes
+      loop:
+         - httpd 
+
+
+    - name: de-activate default apache site
+      file: 
+         path: /etc/httpd/sites-enabled/000-default.conf 
+         state: absent
+      notify: Restart apache
+
