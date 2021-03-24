@@ -1,2 +1,26 @@
 ---
-# tasks file for control
+# al copiar las tareas desde control.yml 
+# - no se copia la identificación de tasks, ya que se supone que todo lo que hay
+#   dentro de este yml es un task, porque está en este subdirectorio.
+# - solamente se copian las task, dejando:
+#     - identificación del host -> dado por el rol
+#     - el become... esto se verá mas adelante.
+#- hosts: control
+#  become: true
+#  tasks:
+
+- name: install tools
+  dnf: 
+      name: "{{ item }}" 
+      state: present
+      update_cache: yes
+#no es necesario instalar curl, lo agrego para realizar el proceso de pasarlo al rol.
+  loop: 
+      - curl
+#no es necesario instalar httplib2, lo agrego para realizar el proceso de pasarlo al rol.         
+- name: instalar httplib desde powertools
+  dnf: 
+      name: python3-httplib2
+      update_cache: yes
+      enablerepo: powertools
+      state: present          
