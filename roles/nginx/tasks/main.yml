@@ -20,10 +20,12 @@
 - name: configure nginx site
   template: 
     src: nginx.conf.j2 
-#        dest: /etc/nginx/sites-available/demo
-    dest: /etc/nginx/conf.d/demo.conf
+    dest: /etc/nginx/conf.d/{{item.key}}.conf
     mode: '0644'
+  loop: "{{ q('dict', sites) }}"
   notify: restart nginx
+  
+
 #=========================================================================
 #----- PARA DESACTIVAR EL DEFAULT SITE HAY QUE MODIFICAR 
 #-----
@@ -54,30 +56,34 @@
 
 - name: Desactivando el sitio por defecto / linea listen 80 default_server
   lineinfile:
-    path: /etc/nginx/conf.d/demo.conf
+    path: /etc/nginx/conf.d/{{item.key}}.conf
     regexp: '^        listen       80 default_server;'
     line:   '#        listen       80 default_server;'
+  loop: "{{ q('dict', sites) }}"
   notify: restart nginx
 
 - name: Desactivando el sitio por defecto / linea listen  [::]:80 default_server
   lineinfile:
-    path: /etc/nginx/conf.d/demo.conf
+    path: /etc/nginx/conf.d/{{item.key}}.conf
     regexp: '^        listen       [::]:80 default_server;'
     line:   '#        listen       [::]:80 default_server;'
+  loop: "{{ q('dict', sites) }}"
   notify: restart nginx
 
 - name: Desactivando el sitio por defecto / linea   server_name  _;
   lineinfile:
-    path: /etc/nginx/conf.d/demo.conf
+    path: /etc/nginx/conf.d/{{item.key}}.conf
     regexp: '^        server_name  _;'
     line:   '#        server_name  _;'
+  loop: "{{ q('dict', sites) }}"
   notify: restart nginx
 
 - name: Desactivando el sitio por defecto / linea root  /usr/share/nginx/html;
   lineinfile:
-    path: /etc/nginx/conf.d/demo.conf
+    path: /etc/nginx/conf.d/{{item.key}}.conf
     regexp: '^        root         /usr/share/nginx/html;'
     line:   '#        root         /usr/share/nginx/html;'
+  loop: "{{ q('dict', sites) }}"
   notify: restart nginx
   
 # para centos 8 selinux: hay que configurar los permisos.
