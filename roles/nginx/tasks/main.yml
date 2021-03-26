@@ -1,11 +1,10 @@
 ---
 - name: install nginx centos version...
   dnf: 
-      name: "{{ item }}" 
+      name: nginx
       state: present
       update_cache: yes
-  loop: 
-      - nginx
+
 #si fuera necesario instalar el httplib2, así se instala
 #pero la dependencia de httplib2 se eliminó en ansible 2.1.
 
@@ -46,46 +45,109 @@
     #        state: absent
 #      notify: restart nginx
 
-#    - name: activate demo nginx site
-#      file: 
-#        src: /etc/nginx/sites-available/demo 
-#        dest: /etc/nginx/sites-enabled/demo 
-#        state: link
-#      notify: restart nginx
-#
+# - name: activate demo nginx site
+#   file: 
+#     src: /etc/nginx/sites-available/demo 
+#     dest: /etc/nginx/sites-enabled/demo 
+#     state: link
+#   notify: restart nginx
 
-- name: Desactivando el sitio por defecto / linea listen 80 default_server
+- name: obtener sitios activos, dado que generan un archivo [SITIO].conf
+  shell: ls -1t /etc/nginx/conf.d | cut -d "." -f1
+  register: sitios_activos
+
+#https://docs.ansible.com/ansible/latest/user_guide/playbooks_variables.html
+- debug:
+    var: sitios_activos.stdout_lines #perfecto, lista de sitios.
+
+- debug:
+    var: q('dict', sites) # perfecto, contenido completo del diccionario
+
+- debug:
+    var: q('dict', sites)|list # perfecto, contenido completo del diccionario
+
+#https://docs.ansible.com/ansible/2.9/plugins/lookup/dict.html
+- debug:
+    msg: "Encontrado sitio {{item.key}} tiene backend {{item.value.backend}} y frontend {{item.value.frontend}}"
+  loop: "{{q('dict',sites)}}"
+
+#https://docs.ansible.com/ansible/2.9/plugins/lookup/list.html
+- debug:
+    msg: "Encontrado sitio activo {{item}}"
+  with_list: "{{sitios_activos.stdout_lines}}"
+
+#https://docs.ansible.com/ansible/2.9/user_guide/playbooks_loops.html
+- debug:
+        msg: "nested loop: El sitio activo {{item[1]}} lo comparo con uno que debo tener {{item[0].key}}"
+  with_nested:
+    - "{{q('dict',sites)}}"
+    - "{{sitios_activos.stdout_lines}}"
+
+#https://docs.ansible.com/ansible/2.9/user_guide/playbooks_loops.html
+- debug:
+        msg: "EN LOOP: El sitio activo {{item[1]}} lo comparo con uno que debo tener {{item[0].key}}"
+  loop: "{{q('dict',sites)| product(sitios_activos.stdout_lines)|list}}"
+
+- debug:
+        msg: "desde with_nested: El sitio activo {{item[1]}} debe ser desactivado porque no es {{item[0].key}}"
+  with_nested:
+    - "{{q('dict',sites)}}"
+    - "{{sitios_activos.stdout_lines}}"    
+  when: item[1] != item[0].key
+
+- debug:
+        msg: "desde LOOP: El sitio activo {{item[1]}} debe ser desactivado porque no es {{item[0].key}}"
+  loop: "{{q('dict',sites)| product(sitios_activos.stdout_lines)|list}}"
+  when: item[1] != item[0].key
+
+- name: Desactivando los sitos que no estén en la clave de variable sitio 1/5 linea listen 80 default_server
   lineinfile:
-    path: /etc/nginx/conf.d/{{item.key}}.conf
+    path: /etc/nginx/conf.d/{{item[1]}}.conf
     regexp: '^        listen       80 default_server;'
     line:   '#        listen       80 default_server;'
-  loop: "{{ q('dict', sites) }}"
+  loop: "{{q('dict',sites)| product(sitios_activos.stdout_lines)|list}}"
+  when: item[1] != item[0].key
   notify: restart nginx
 
-- name: Desactivando el sitio por defecto / linea listen  [::]:80 default_server
+#en vez de de desactivar el sitio por defecto ahora se van a desactivar
+#todos los sitios en la proximas tres task.
+#https://nginx.org/en/docs/http/load_balancing.html
+- name: Desactivando los sitos que no estén en la clave de variable sitio 2/5 linea listen  [::]:80 default_server
   lineinfile:
-    path: /etc/nginx/conf.d/{{item.key}}.conf
+    path: /etc/nginx/conf.d/{{item[1]}}.conf
     regexp: '^        listen       [::]:80 default_server;'
     line:   '#        listen       [::]:80 default_server;'
-  loop: "{{ q('dict', sites) }}"
+  loop: "{{q('dict',sites)| product(sitios_activos.stdout_lines)|list}}"
+  when: item[1] != item[0].key
   notify: restart nginx
 
-- name: Desactivando el sitio por defecto / linea   server_name  _;
+- name: Desactivando los sitos que no estén en la clave de variable sitio 3/5 linea   server_name  _;
   lineinfile:
-    path: /etc/nginx/conf.d/{{item.key}}.conf
+    path: /etc/nginx/conf.d/{{item[1]}}.conf
     regexp: '^        server_name  _;'
     line:   '#        server_name  _;'
-  loop: "{{ q('dict', sites) }}"
+  loop: "{{q('dict',sites)| product(sitios_activos.stdout_lines)|list}}"
+  when: item[1] != item[0].key
   notify: restart nginx
 
-- name: Desactivando el sitio por defecto / linea root  /usr/share/nginx/html;
+- name: Desactivando los sitos que no estén en la clave de variable sitio 4/5  linea root  /usr/share/nginx/html;
   lineinfile:
-    path: /etc/nginx/conf.d/{{item.key}}.conf
+    path: /etc/nginx/conf.d/{{item[1]}}.conf
     regexp: '^        root         /usr/share/nginx/html;'
     line:   '#        root         /usr/share/nginx/html;'
-  loop: "{{ q('dict', sites) }}"
+  loop: "{{q('dict',sites)| product(sitios_activos.stdout_lines)|list}}"
+  when: item[1] != item[0].key
   notify: restart nginx
   
+  
+- name: Desactivando los sitos que no estén en la clave de variable 5/5 sitio proxy_pass recibe el keyword y lo pasa al upstream
+  lineinfile:
+    path: /etc/nginx/conf.d/{{item[1]}}.conf
+    regexp: "^        proxy_pass http://{{ item[1]}};"
+    line:   "#        proxy_pass http://{{ item[1] }};"
+  loop: "{{q('dict',sites)| product(sitios_activos.stdout_lines)|list}}"
+  when: item[1] != item[0].key
+  notify: restart nginx
 # para centos 8 selinux: hay que configurar los permisos.
 #[root@lb01 nginx]#  setsebool httpd_can_network_connect 1 -P
 #[root@lb01 nginx]# setsebool -P httpd_graceful_shutdown 1
@@ -117,12 +179,9 @@
     state: yes
     persistent: yes
 
-
 - name: chequear que haya iniciado nginx
   systemd:
-      name: "{{ item }}"
+      name: nginx
       state: started
       enabled: yes
-  loop:
-      - nginx 
 #https://upcloud.com/community/tutorials/configure-load-balancing-nginx/ 
