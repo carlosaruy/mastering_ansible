@@ -2,5 +2,6 @@
 - hosts: loadbalancer
   become: true
   roles:
-#    - nginx
-    -  role: nginx
+    - nginx
+    # -  role: nginx
+    #- {role: nginx, sites: demo, {frontend: 80, backend: 80}}

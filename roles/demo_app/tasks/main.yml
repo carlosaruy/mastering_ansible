@@ -36,6 +36,14 @@
       name: wsgi
   notify:
       - Restart apache
+- name: copiar el templete demo.wsgi  /var/www/demo/html
+  template: 
+      src: demo.wsgi.j2
+      dest: /var/www/demo/html/demo.wsgi
+      mode: '0755'
+  notify:
+      - Restart apache
+
 - name: copiar el fuente de la app de demostración, en /var/www/demo/html
   copy: 
       src: demo/app/
@@ -43,6 +51,7 @@
       mode: '0755'
   notify:
       - Restart apache
+
 - name:  registrar la ip en hosts del servidor de la base de datos
   lineinfile: 
       dest: /etc/hosts 

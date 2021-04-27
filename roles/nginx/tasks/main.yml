@@ -16,6 +16,12 @@
       enablerepo: powertools
       state: present
 
+- debug:
+    var: q('dict', sites)|list # perfecto, contenido completo del diccionario
+
+#ojo, aca con template estoy generando el sitio de item.key
+#pero no estoy borrando si ya está configurado...
+
 - name: configure nginx site
   template: 
     src: nginx.conf.j2 
@@ -36,6 +42,24 @@
 #-> comentar        listen       [::]:80 default_server;
 #-> comentar        server_name  _;
 #-> comentar        root         /usr/share/nginx/html;
+#en definitiva queda así
+# # # # # # # # # # # #   upstream demo {
+# # # # # # # # # # # #      server app01;
+# # # # # # # # # # # #      server app02;
+# # # # # # # # # # # #  }
+
+# # # # # # # # # # # #   server {
+# # # # # # # # # # # #       listen 80;
+
+# # # # # # # # # # # #       location / {
+# # # # # # # # # # # #           proxy_pass http://demo;
+# # # # # # # # # # # #       }
+# # # # # # # # # # # #   }
+# # # # # # # # # # # #   #        listen       80 default_server;
+# # # # # # # # # # # #   #        listen       [::]:80 default_server;
+# # # # # # # # # # # #   #        server_name  _;
+# # # # # # # # # # # #   #        root         /usr/share/nginx/html;
+
 #========================================================================
 #    - name: de-activate default nginx site
 #      file: 
@@ -50,7 +74,7 @@
 #     src: /etc/nginx/sites-available/demo 
 #     dest: /etc/nginx/sites-enabled/demo 
 #     state: link
-#   notify: restart nginx
+#   not
 
 - name: obtener sitios activos, dado que generan un archivo [SITIO].conf
   shell: ls -1t /etc/nginx/conf.d | cut -d "." -f1
