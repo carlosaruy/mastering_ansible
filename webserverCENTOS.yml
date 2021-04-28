@@ -4,5 +4,6 @@
 
   roles:
     - apache2
-    - demo_app
-    
+    - {role: demo_app, db_user_name: demo, db_user_pass: demo, db_name: demo }
+    #línea que se modifica -->>      - demo_app
+    #datos a llenar en template -->> 'mysql://{{ db_user_name }}:{{ db_user_pass }}@{{ groups.database[0] }}/{{ db_name }}'
